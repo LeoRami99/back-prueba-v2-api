@@ -12,7 +12,23 @@ export class TransactionController {
 
   @Post()
   async create(@Body() body: CreateTransactionDto) {
-    return this.createUseCase.execute(body);
+    const transactionData = {
+      amount: body.amount,
+      userId: body.userId,
+      methodPayment: body.methodPayment,
+      productId: body.productId,
+      price: body.price,
+    };
+    const token_card = body.token_card;
+    const acceptance_token = body.acceptance_token;
+    const installments = body.installments;
+
+    return this.createUseCase.execute(
+      transactionData,
+      token_card,
+      acceptance_token,
+      installments,
+    );
   }
   @Get(':id')
   async getTransactionById(@Body('id') id: string) {
