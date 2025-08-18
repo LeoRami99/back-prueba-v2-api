@@ -1,7 +1,7 @@
 import { TransactionModel } from './transaction.model';
 import { TransactionRepository } from '../../domain/repositories/transaction.repository';
 import { TransactionEntity } from '../../domain/entities/transaction.entity';
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Sequelize } from 'sequelize-typescript';
 
@@ -32,9 +32,12 @@ export class TransactionRepositoryImpl implements TransactionRepository {
 
       await t.commit();
       return transaction as unknown as TransactionEntity;
-    } catch (error) {
+    } catch (error: unknown) {
       await t.rollback();
-      throw error;
+      throw new InternalServerErrorException(
+        `Error creating transaction in database`,
+        error instanceof Error ? error.message : 'Unknown error',
+      );
     }
   }
   async getTransactionById(id: string): Promise<TransactionEntity | null> {
