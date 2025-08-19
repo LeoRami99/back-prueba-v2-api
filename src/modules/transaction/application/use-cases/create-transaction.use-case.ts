@@ -6,10 +6,10 @@ import {
 import { TransactionRepository } from '../../domain/repositories/transaction.repository';
 import { TransactionEntity } from '../../domain/entities/transaction.entity';
 import { TransactionExternal } from '../../domain/entities/transaction.external.entity';
-import { IVA } from 'src/helpers/tax';
-import { convertToCents } from 'src/utils/convertToCents';
-import { generateIdInternalTransaction } from 'src/utils/generateIdInternalTransaction';
-import { hash256Signature } from 'src/utils/hash256';
+import { IVA } from '../../../../helpers/tax';
+import { convertToCents } from '../../../../utils/convertToCents';
+import { generateIdInternalTransaction } from '../../../../utils/generateIdInternalTransaction';
+import { hash256Signature } from '../../../../utils/hash256';
 import { CreateExternalTransactionUseCase } from './create-external-transaction.use-case';
 
 @Injectable()
