@@ -10,4 +10,8 @@ export abstract class ProductsRepository {
     total: number;
     pages: number;
   }>;
+  abstract updateStockByProductId(
+    id: string,
+    stock: number,
+  ): Promise<ProductsEntity>;
 }
