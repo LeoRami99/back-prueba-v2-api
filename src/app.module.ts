@@ -5,6 +5,7 @@ import { databaseConfig } from './config/database.config';
 import { ProductsModule } from './modules/products/products.module';
 import { CardModule } from './modules/card/card.module';
 import { TransactionModule } from './modules/transaction/transaction.module';
+import { WebhookModule } from './modules/webhook/webhook.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { TransactionModule } from './modules/transaction/transaction.module';
     ProductsModule,
     CardModule,
     TransactionModule,
+    WebhookModule,
   ],
   controllers: [],
   providers: [],
