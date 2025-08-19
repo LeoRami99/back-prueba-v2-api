@@ -14,6 +14,14 @@ export class TransactionExternalRepositoryImpl
   implements TransactionExternalRepository
 {
   constructor(private readonly httpService: HttpService) {}
+  // getTransactionById(id: string): Promise<TransactionEntity | null> {
+  //   throw new Error('Method not implemented.');
+  // }
+  // getTransactionByIdInternal(
+  //   idInternal: string,
+  // ): Promise<TransactionEntity | null> {
+  //   throw new Error('Method not implemented.');
+  // }
   async create(
     transactionData: Partial<TransactionExternal>,
   ): Promise<ApiPaymentResult> {
@@ -39,7 +47,6 @@ export class TransactionExternalRepositoryImpl
       if (!response?.data) {
         throw new InternalServerErrorException('Error creating transaction');
       }
-
       return response.data;
     } catch (error: unknown) {
       const errorMessage =
