@@ -9,7 +9,7 @@ export class GetAllProductsUseCase {
   async execute(
     page: number = 1,
     pageSize: number = 5,
-    filter?: string,
+    filter: string | undefined,
   ): Promise<{
     products: ProductsEntity[];
     total: number;
