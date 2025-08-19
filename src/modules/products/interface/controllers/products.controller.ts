@@ -16,7 +16,7 @@ export class ProductsController {
   @Get()
   @UsePipes(new ValidationPipe({ transform: true }))
   async finAll(@Query() query: GetProductsDto) {
-    const { page, pageSize, filter } = query;
+    const { page = 1, pageSize = 5, filter = undefined } = query;
     return this.getAllProducta.execute(page, pageSize, filter);
   }
 }
