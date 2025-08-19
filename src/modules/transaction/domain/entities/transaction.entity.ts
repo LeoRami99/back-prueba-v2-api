@@ -11,3 +11,10 @@ export class TransactionEntity {
     public status?: string,
   ) {}
 }
+
+export class TransactionExternalParams {
+  constructor(
+    public idEsternalTransaction: string,
+    public status: string,
+  ) {}
+}
