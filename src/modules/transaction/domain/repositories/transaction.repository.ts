@@ -10,12 +10,20 @@ export abstract class TransactionRepository {
   abstract getTransactionByIdInternal(
     idInternal: string,
   ): Promise<TransactionEntity | null>;
+  abstract updateTransactionByExternalTransaction(
+    idExternalTransaction: string,
+    status: string,
+  ): Promise<TransactionEntity | null>;
+  abstract getTransactionByIdExternal(
+    idExternal: string,
+  ): Promise<TransactionEntity | null>;
 }
 
 export abstract class TransactionExternalRepository {
   abstract create(
     data: Partial<TransactionExternal>,
   ): Promise<ApiPaymentResult | null>;
+
   // abstract getTransactionById(id: string): Promise<TransactionEntity | null>;
   // abstract getTransactionByIdInternal(
   //   idInternal: string,
