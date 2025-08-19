@@ -13,23 +13,33 @@ import { CreateExternalTransactionUseCase } from './application/use-cases/create
 import { SequelizeModule } from '@nestjs/sequelize';
 import { TransactionModel } from './infrastructure/database/transaction.model';
 import { HttpModule } from '@nestjs/axios';
+import { UpdateTransactionByIdExternalUseCase } from './application/use-cases/update-transaction-byexternal.use-case';
+import { UpdateStockUseCase } from '../products/application/use-cases/update-stock.use-case';
+import { ProductsModule } from '../products/products.module';
 
 @Module({
-  imports: [SequelizeModule.forFeature([TransactionModel]), HttpModule],
+  imports: [
+    SequelizeModule.forFeature([TransactionModel]),
+    HttpModule,
+    ProductsModule,
+  ],
   controllers: [TransactionController],
   providers: [
-    CreateTransactionUseCase,
+    UpdateTransactionByIdExternalUseCase,
     GetTransactionByIdUseCase,
     GetTransactionByInternalIdUseCase,
     CreateExternalTransactionUseCase,
+    CreateTransactionUseCase,
+    UpdateStockUseCase,
     {
       provide: TransactionRepository,
       useClass: TransactionRepositoryImpl,
     },
     {
       provide: TransactionExternalRepository,
-      useClass: TransactionExternalRepositoryImpl, // Assuming this is defined in the same module or imported correctly
+      useClass: TransactionExternalRepositoryImpl,
     },
   ],
+  exports: [UpdateTransactionByIdExternalUseCase, TransactionRepository],
 })
 export class TransactionModule {}
