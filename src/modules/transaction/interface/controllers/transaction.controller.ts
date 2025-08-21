@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param } from '@nestjs/common';
 import { CreateTransactionUseCase } from '../../application/use-cases/create-transaction.use-case';
 import { GetTransactionByIdUseCase } from '../../application/use-cases/get-transaction-id.use-case';
 import { CreateTransactionDto } from '../dto/create-transaction.dto';
@@ -31,7 +31,7 @@ export class TransactionController {
     );
   }
   @Get(':id')
-  async getTransactionById(@Body('id') id: string) {
+  async getTransactionById(@Param('id') id: string) {
     return this.getTransactionByIdUseCase.execute(id);
   }
   @Get('internal/:idInternal')
