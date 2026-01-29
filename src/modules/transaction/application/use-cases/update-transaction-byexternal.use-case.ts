@@ -26,7 +26,8 @@ export class UpdateTransactionByIdExternalUseCase {
         message: 'Transaction data is required',
       });
     }
-    if (!transactionData.idExternalTransaction || !transactionData.status) {
+    console.log('Updating transaction with data:', transactionData);
+    if (!transactionData.idEsternalTransaction || !transactionData.status) {
       throw new BadRequestException({
         statusCode: 400,
         message: 'External transaction id and status are required',
@@ -49,12 +50,12 @@ export class UpdateTransactionByIdExternalUseCase {
 
     const transactionCheck =
       await this.transactionRepository.getTransactionByIdExternal(
-        transactionData.idExternalTransaction,
+        transactionData.idEsternalTransaction,
       );
 
     const transaction =
       await this.transactionRepository.updateTransactionByExternalTransaction(
-        transactionData.idExternalTransaction,
+        transactionData.idEsternalTransaction,
         normalizedStatus,
       );
 
