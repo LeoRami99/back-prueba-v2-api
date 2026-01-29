@@ -1,6 +1,12 @@
 import { CardRepository } from '../../domain/repositories/card.repository';
 import { CardEntity } from '../../domain/entities/card.entity';
-import { HttpException, Injectable } from '@nestjs/common';
+import {
+  BadGatewayException,
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { HttpService } from '@nestjs/axios/dist';
 import { CardTokenEntity } from '../../domain/entities/card.token.entity';
 import { firstValueFrom } from 'rxjs';
@@ -12,6 +18,11 @@ export class CardRepositoryExternalHttp implements CardRepository {
   async getCardToken(card: CardEntity): Promise<CardTokenEntity> {
     try {
       const urlTokenCard = process.env.UAT_SANDBOX_URL;
+      if (!urlTokenCard) {
+        throw new InternalServerErrorException(
+          'UAT_SANDBOX_URL is not defined',
+        );
+      }
       const uriTokenCard = `${urlTokenCard}/tokens/cards`;
       const response: AxiosResponse<CardTokenEntity> = await firstValueFrom(
         this.httpService.post<CardTokenEntity>(uriTokenCard, card, {
@@ -22,24 +33,52 @@ export class CardRepositoryExternalHttp implements CardRepository {
         }),
       );
       if (!response?.data) {
-        throw new HttpException(
-          {
-            statusCode: 400,
-            message: 'Error creating card token',
-          },
-          400,
-        );
+        throw new BadGatewayException('Empty response from token provider');
       }
       return response.data;
     } catch (error: unknown) {
-      throw new HttpException(
-        {
-          statusCode: 500,
-          message: 'Error creating card token',
-          error: error,
-        },
-        500,
-      );
+      const axiosError = error as {
+        response?: { status?: number; data?: any };
+        message?: string;
+      };
+
+      const status = axiosError?.response?.status;
+      const providerMessage =
+        axiosError?.response?.data?.error?.reason ??
+        axiosError?.response?.data?.error?.message ??
+        axiosError?.response?.data?.message ??
+        axiosError?.message ??
+        'Unknown error';
+
+      if (status === 400) {
+        throw new BadRequestException({
+          message: 'Invalid card payload',
+          providerMessage,
+        });
+      }
+      if (status === 422) {
+        throw new UnprocessableEntityException({
+          message: 'Card data rejected by provider',
+          providerMessage,
+        });
+      }
+      if (status && status >= 400 && status < 500) {
+        throw new BadRequestException({
+          message: 'Client error from provider',
+          providerMessage,
+        });
+      }
+      if (status && status >= 500) {
+        throw new BadGatewayException({
+          message: 'Provider error creating card token',
+          providerMessage,
+        });
+      }
+
+      throw new InternalServerErrorException({
+        message: 'Unexpected error creating card token',
+        providerMessage,
+      });
     }
   }
 }
