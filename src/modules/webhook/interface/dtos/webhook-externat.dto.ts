@@ -217,14 +217,12 @@ export class SignatureDto {
 }
 
 export class WebhookDataDto {
-  @ApiProperty({ type: () => TransactionDataDto })
+  @ApiProperty({ type: () => WebhookTransactionWrapperDto })
   @IsObject()
   @ValidateNested()
-  @Type(() => TransactionDataDto)
+  @Type(() => WebhookTransactionWrapperDto)
   @IsNotEmpty()
-  data: {
-    transaction: TransactionDataDto;
-  };
+  data: WebhookTransactionWrapperDto;
 
   @ApiProperty()
   @IsString()
@@ -250,4 +248,13 @@ export class WebhookDataDto {
   @IsString()
   @IsNotEmpty()
   environment: string;
+}
+
+export class WebhookTransactionWrapperDto {
+  @ApiProperty({ type: () => TransactionDataDto })
+  @IsObject()
+  @ValidateNested()
+  @Type(() => TransactionDataDto)
+  @IsNotEmpty()
+  transaction: TransactionDataDto;
 }
