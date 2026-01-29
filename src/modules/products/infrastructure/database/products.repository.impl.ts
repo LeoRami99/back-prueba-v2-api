@@ -1,7 +1,12 @@
 import { ProductModel } from './product.model';
 import { ProductsRepository } from '../../domain/repositories/products.repository';
 import { ProductsEntity } from '../../domain/entities/products.entity';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
@@ -45,7 +50,8 @@ export class ProductsRepositoryImpl implements ProductsRepository {
     const tx = await this.sequelize.transaction();
     try {
       const product = await this.productModel.findByPk(id, {
-        raw: true,
+        transaction: tx,
+        lock: tx.LOCK.UPDATE,
       });
       if (!product) {
         throw new NotFoundException({
@@ -55,44 +61,37 @@ export class ProductsRepositoryImpl implements ProductsRepository {
       }
 
       if (stock < 0) {
-        throw new NotFoundException({
-          statusCode: 404,
+        throw new BadRequestException({
+          statusCode: 400,
           message: 'Stock cannot be negative',
         });
       }
       const stockUpdate = product.stock - stock;
 
       if (stockUpdate < 0) {
-        throw new NotFoundException({
-          statusCode: 404,
+        throw new BadRequestException({
+          statusCode: 400,
           message: 'Stock cannot be negative after update',
         });
       }
 
-      const updateProduct = await this.productModel.update(
+      const updatedProduct = await product.update(
         { stock: stockUpdate },
-        {
-          where: { id },
-          returning: true,
-          transaction: tx,
-        },
+        { transaction: tx },
       );
-      if (!updateProduct) {
-        await tx.rollback();
-        throw new NotFoundException({
-          statusCode: 404,
-          message: 'Error updating product stock',
-        });
-      }
+
       await tx.commit();
-      return product as ProductsEntity;
+      return updatedProduct as ProductsEntity;
     } catch (error: unknown) {
       await tx.rollback();
-      if (error instanceof NotFoundException) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
         throw error;
       }
-      throw new NotFoundException({
-        statusCode: 404,
+      throw new InternalServerErrorException({
+        statusCode: 500,
         message: 'Error updating product stock',
       });
     }
