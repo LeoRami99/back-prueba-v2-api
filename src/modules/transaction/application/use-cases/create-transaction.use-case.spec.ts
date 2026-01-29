@@ -8,17 +8,17 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 
-jest.mock('/utils/hash256', () => ({
+jest.mock('../../../../utils/hash256', () => ({
   hash256Signature: jest.fn().mockResolvedValue('mock-signature'),
 }));
 
-jest.mock('/utils/generateIdInternalTransaction', () => ({
+jest.mock('../../../../utils/generateIdInternalTransaction', () => ({
   generateIdInternalTransaction: jest
     .fn()
     .mockReturnValue('mock-internal-reference'),
 }));
 
-jest.mock('/utils/convertToCents', () => ({
+jest.mock('../../../../utils/convertToCents', () => ({
   convertToCents: jest.fn().mockReturnValue(12000),
 }));
 
@@ -35,8 +35,8 @@ describe('CreateTransactionUseCase', () => {
     status: 'PENDING',
     referenceInternalTransaction: 'ref-internal-1',
     idExternalTransaction: 'ext-tx-1',
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    amount: 0,
+    methodPayment: 'CARD',
   };
 
   const mockExternalTransactionResponse = {
@@ -101,7 +101,7 @@ describe('CreateTransactionUseCase', () => {
     ) as jest.Mocked<TransactionRepository>;
     createExternalTransactionUseCase = module.get(
       CreateExternalTransactionUseCase,
-    ) as jest.Mocked<CreateExternalTransactionUseCase>;
+    );
 
     // Mock environment variables
     process.env.INTEGRITY_KEY = 'test-integrity-key';
@@ -120,8 +120,10 @@ describe('CreateTransactionUseCase', () => {
     it('should create a transaction successfully', async () => {
       // Arrange
       const transactionData: Partial<TransactionEntity> = {
+        amount: 1,
         userId: 'user-1',
         productId: 'product-1',
+        methodPayment: 'CARD',
         price: 100,
       };
 
@@ -159,8 +161,10 @@ describe('CreateTransactionUseCase', () => {
       });
 
       expect(transactionRepository.create).toHaveBeenCalledWith({
+        amount: 1,
         userId: 'user-1',
         productId: 'product-1',
+        methodPayment: 'CARD',
         price: 100,
         referenceInternalTransaction: 'mock-internal-reference',
         idExternalTransaction: 'ext-tx-1',
@@ -175,13 +179,20 @@ describe('CreateTransactionUseCase', () => {
 
     it('should throw BadRequestException when price is not provided', async () => {
       const transactionData: Partial<TransactionEntity> = {
+        amount: 1,
         userId: 'user-1',
         productId: 'product-1',
+        methodPayment: 'CARD',
       };
 
-      await expect(useCase.execute(transactionData)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        useCase.execute(
+          transactionData,
+          'card-token-123',
+          'acceptance-token-123',
+          1,
+        ),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should throw InternalServerErrorException when integrity key is not found', async () => {
@@ -189,14 +200,21 @@ describe('CreateTransactionUseCase', () => {
       process.env.INTEGRITY_KEY = '';
 
       const transactionData: Partial<TransactionEntity> = {
+        amount: 1,
         userId: 'user-1',
         productId: 'product-1',
+        methodPayment: 'CARD',
         price: 100,
       };
 
-      await expect(useCase.execute(transactionData)).rejects.toThrow(
-        InternalServerErrorException,
-      );
+      await expect(
+        useCase.execute(
+          transactionData,
+          'card-token-123',
+          'acceptance-token-123',
+          1,
+        ),
+      ).rejects.toThrow(InternalServerErrorException);
     });
 
     it('should throw InternalServerErrorException when redirect URL is not found', async () => {
@@ -204,34 +222,50 @@ describe('CreateTransactionUseCase', () => {
       process.env.REDIRECT_FRONT_TX = '';
 
       const transactionData: Partial<TransactionEntity> = {
+        amount: 1,
         userId: 'user-1',
         productId: 'product-1',
+        methodPayment: 'CARD',
         price: 100,
       };
 
-      await expect(useCase.execute(transactionData)).rejects.toThrow(
-        InternalServerErrorException,
-      );
+      await expect(
+        useCase.execute(
+          transactionData,
+          'card-token-123',
+          'acceptance-token-123',
+          1,
+        ),
+      ).rejects.toThrow(InternalServerErrorException);
     });
 
     it('should throw InternalServerErrorException when external transaction creation fails', async () => {
       const transactionData: Partial<TransactionEntity> = {
+        amount: 1,
         userId: 'user-1',
         productId: 'product-1',
+        methodPayment: 'CARD',
         price: 100,
       };
 
       createExternalTransactionUseCase.execute.mockResolvedValue(null);
 
-      await expect(useCase.execute(transactionData)).rejects.toThrow(
-        InternalServerErrorException,
-      );
+      await expect(
+        useCase.execute(
+          transactionData,
+          'card-token-123',
+          'acceptance-token-123',
+          1,
+        ),
+      ).rejects.toThrow(InternalServerErrorException);
     });
 
     it('should throw InternalServerErrorException when internal transaction creation fails', async () => {
       const transactionData: Partial<TransactionEntity> = {
+        amount: 1,
         userId: 'user-1',
         productId: 'product-1',
+        methodPayment: 'CARD',
         price: 100,
       };
 
@@ -240,9 +274,14 @@ describe('CreateTransactionUseCase', () => {
       );
       transactionRepository.create.mockResolvedValue(null);
 
-      await expect(useCase.execute(transactionData)).rejects.toThrow(
-        InternalServerErrorException,
-      );
+      await expect(
+        useCase.execute(
+          transactionData,
+          'card-token-123',
+          'acceptance-token-123',
+          1,
+        ),
+      ).rejects.toThrow(InternalServerErrorException);
     });
   });
 });
