@@ -30,6 +30,40 @@ export class CreateTransactionUseCase {
         message: 'Transaction data is required',
       });
     }
+    if (
+      !transactionData.userId ||
+      !transactionData.methodPayment ||
+      !transactionData.productId
+    ) {
+      throw new BadRequestException({
+        statusCode: 400,
+        message: 'userId, methodPayment and productId are required',
+      });
+    }
+    if (!transactionData.amount || transactionData.amount <= 0) {
+      throw new BadRequestException({
+        statusCode: 400,
+        message: 'Amount must be greater than zero',
+      });
+    }
+    if (!transactionData.price || transactionData.price <= 0) {
+      throw new BadRequestException({
+        statusCode: 400,
+        message: 'Price must be greater than zero',
+      });
+    }
+    if (!token_card || !acceptance_token) {
+      throw new BadRequestException({
+        statusCode: 400,
+        message: 'token_card and acceptance_token are required',
+      });
+    }
+    if (!installments || installments <= 0) {
+      throw new BadRequestException({
+        statusCode: 400,
+        message: 'installments must be greater than zero',
+      });
+    }
     // const transaction =
     //   await this.transactionRepository.create(transactionData);
     // if (!transaction) {
@@ -48,13 +82,6 @@ export class CreateTransactionUseCase {
       throw new InternalServerErrorException({
         statusCode: 500,
         message: 'Integrity key not found',
-      });
-    }
-
-    if (!transactionData.price) {
-      throw new BadRequestException({
-        statusCode: 400,
-        message: 'Price is required',
       });
     }
 
