@@ -26,16 +26,36 @@ export class UpdateTransactionByIdExternalUseCase {
         message: 'Transaction data is required',
       });
     }
+    if (!transactionData.idExternalTransaction || !transactionData.status) {
+      throw new BadRequestException({
+        statusCode: 400,
+        message: 'External transaction id and status are required',
+      });
+    }
+
+    const normalizedStatus = transactionData.status.toUpperCase();
+    const allowedStatuses = new Set([
+      'PENDING',
+      'APPROVED',
+      'REJECTED',
+      'CANCELED',
+    ]);
+    if (!allowedStatuses.has(normalizedStatus)) {
+      throw new BadRequestException({
+        statusCode: 400,
+        message: 'Invalid transaction status',
+      });
+    }
 
     const transactionCheck =
       await this.transactionRepository.getTransactionByIdExternal(
-        transactionData.idEsternalTransaction as string,
+        transactionData.idExternalTransaction,
       );
 
     const transaction =
       await this.transactionRepository.updateTransactionByExternalTransaction(
-        transactionData.idEsternalTransaction as string,
-        transactionData.status as string,
+        transactionData.idExternalTransaction,
+        normalizedStatus,
       );
 
     if (!transaction) {
@@ -45,7 +65,7 @@ export class UpdateTransactionByIdExternalUseCase {
       });
     }
 
-    if (transactionData.status === 'APPROVED') {
+    if (normalizedStatus === 'APPROVED') {
       if (!transactionCheck) {
         throw new BadRequestException({
           statusCode: 400,
