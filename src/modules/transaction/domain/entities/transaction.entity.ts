@@ -14,7 +14,7 @@ export class TransactionEntity {
 
 export class TransactionExternalParams {
   constructor(
-    public idEsternalTransaction: string,
+    public idExternalTransaction: string,
     public status: string,
   ) {}
 }
