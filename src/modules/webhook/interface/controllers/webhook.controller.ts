@@ -9,7 +9,13 @@ import {
 } from '@nestjs/common';
 import { UpdateTransactionWebhookUseCase } from '../../application/use-cases/update-transaction-webhook.use-case';
 import { WebhookDataDto } from '../dtos/webhook-externat.dto';
-import { ApiBody, ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiHeader,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
 @ApiTags('webhooks')
 @Controller('webhook')
@@ -32,9 +38,10 @@ export class WebhookController {
   @HttpCode(200)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async create(
-    @Body() body: WebhookDataDto,
+    @Body() body: any,
     @Headers('x-event-checksum') checksumHeader?: string,
   ) {
+    console.log('Received webhook:', body);
     return this.updateTransactionWebhook.execute(body, checksumHeader);
   }
 }
