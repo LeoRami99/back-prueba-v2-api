@@ -2,6 +2,8 @@ import {
   Injectable,
   InternalServerErrorException,
   UnprocessableEntityException,
+  BadRequestException,
+  BadGatewayException,
 } from '@nestjs/common';
 import { TransactionExternalRepository } from '../../domain/repositories/transaction.repository';
 import { HttpService } from '@nestjs/axios';
@@ -45,15 +47,52 @@ export class TransactionExternalRepositoryImpl
         }),
       );
       if (!response?.data) {
-        throw new InternalServerErrorException('Error creating transaction');
+        throw new BadGatewayException('Empty response from payment provider');
       }
       return response.data;
     } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
-      throw new InternalServerErrorException(
-        `Error creating external transaction - ${errorMessage}`,
-      );
+      const axiosError = error as {
+        response?: { status?: number; data?: any };
+        message?: string;
+      };
+
+      const status = axiosError?.response?.status;
+      const providerMessage =
+        axiosError?.response?.data?.error?.reason ??
+        axiosError?.response?.data?.error?.message ??
+        axiosError?.response?.data?.message ??
+        axiosError?.message ??
+        'Unknown error';
+
+      if (status === 400) {
+        throw new BadRequestException({
+          message: 'Invalid payment payload',
+          providerMessage,
+        });
+      }
+      if (status === 422) {
+        throw new UnprocessableEntityException({
+          message: 'Payment rejected by provider',
+          providerMessage,
+        });
+      }
+      if (status && status >= 400 && status < 500) {
+        throw new BadRequestException({
+          message: 'Client error from provider',
+          providerMessage,
+        });
+      }
+      if (status && status >= 500) {
+        throw new BadGatewayException({
+          message: 'Provider error creating transaction',
+          providerMessage,
+        });
+      }
+
+      throw new InternalServerErrorException({
+        message: 'Unexpected error creating external transaction',
+        providerMessage,
+      });
     }
   }
 }
