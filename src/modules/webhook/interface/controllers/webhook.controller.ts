@@ -1,6 +1,14 @@
-import { Controller, Post, Body, HttpCode } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  Headers,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { UpdateTransactionWebhookUseCase } from '../../application/use-cases/update-transaction-webhook.use-case';
-// import { WebhookDataDto } from '../dtos/webhook-externat.dto';
+import { WebhookDataDto } from '../dtos/webhook-externat.dto';
 
 @Controller('webhook')
 export class WebhookController {
@@ -10,10 +18,11 @@ export class WebhookController {
 
   @Post()
   @HttpCode(200)
-  async create(@Body() body: any) {
-    return this.updateTransactionWebhook.execute({
-      idEsternalTransaction: body?.data.transaction.id,
-      status: body?.data.transaction.status,
-    });
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  async create(
+    @Body() body: WebhookDataDto,
+    @Headers('x-event-checksum') checksumHeader?: string,
+  ) {
+    return this.updateTransactionWebhook.execute(body, checksumHeader);
   }
 }
