@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   UnauthorizedException,
+  Logger,
 } from '@nestjs/common';
 import { UpdateTransactionByIdExternalUseCase } from '../../../transaction/application/use-cases/update-transaction-byexternal.use-case';
 import { createHash } from 'crypto';
@@ -16,11 +17,16 @@ const buildWebhookSignature = (
   payload: WebhookDataDto,
   secret: string,
 ): string => {
-  const base = payload?.data ?? {};
   const properties = payload?.signature?.properties ?? [];
   const values = properties.map((property) => {
     const parts = property.split('.');
-    let current: unknown = base;
+    let current: unknown;
+    if (property.startsWith('transaction.')) {
+      current = payload?.data?.transaction ?? {};
+      parts.shift();
+    } else {
+      current = payload?.data ?? {};
+    }
     for (const part of parts) {
       if (current && typeof current === 'object' && part in current) {
         current = (current as Record<string, unknown>)[part];
@@ -38,6 +44,8 @@ const buildWebhookSignature = (
 
 @Injectable()
 export class UpdateTransactionWebhookUseCase {
+  private readonly logger = new Logger(UpdateTransactionWebhookUseCase.name);
+
   constructor(
     private readonly updateTransactionByIdExternalUseCase: UpdateTransactionByIdExternalUseCase,
   ) {}
@@ -64,15 +72,29 @@ export class UpdateTransactionWebhookUseCase {
       checksumHeader?.toLowerCase() ??
       payload.signature?.checksum?.toLowerCase();
     if (!received || expected.toLowerCase() !== received) {
+      this.logger.warn(
+        `Invalid webhook signature event=${payload?.event} tx=${payload?.data?.transaction?.id}`,
+      );
       throw new UnauthorizedException({
         statusCode: 401,
         message: 'Invalid webhook signature',
       });
     }
 
+    if (!payload?.data?.transaction?.id || !payload?.data?.transaction?.status) {
+      throw new BadRequestException({
+        statusCode: 400,
+        message: 'External transaction id and status are required',
+      });
+    }
+
+    this.logger.log(
+      `Webhook received event=${payload.event} tx=${payload.data.transaction.id} status=${payload.data.transaction.status}`,
+    );
+
     return await this.updateTransactionByIdExternalUseCase.execute({
-      idEsternalTransaction: payload?.data?.transaction?.id,
-      status: payload?.data?.transaction?.status,
+      idEsternalTransaction: payload.data.transaction.id,
+      status: payload.data.transaction.status,
     } as Partial<TransactionExternalParams>);
   }
 }
