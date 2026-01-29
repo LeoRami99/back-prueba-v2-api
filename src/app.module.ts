@@ -6,6 +6,8 @@ import { ProductsModule } from './modules/products/products.module';
 import { CardModule } from './modules/card/card.module';
 import { TransactionModule } from './modules/transaction/transaction.module';
 import { WebhookModule } from './modules/webhook/webhook.module';
+import { CustomersModule } from './modules/customers/customers.module';
+import { DeliveriesModule } from './modules/deliveries/deliveries.module';
 
 @Module({
   imports: [
@@ -17,6 +19,8 @@ import { WebhookModule } from './modules/webhook/webhook.module';
     CardModule,
     TransactionModule,
     WebhookModule,
+    CustomersModule,
+    DeliveriesModule,
   ],
   controllers: [],
   providers: [],
