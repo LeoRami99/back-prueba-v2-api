@@ -18,6 +18,8 @@ describe('TransactionController', () => {
     status: 'PENDING',
     referenceInternalTransaction: 'ref-internal-1',
     idExternalTransaction: 'ext-tx-1',
+    amount: 100,
+    methodPayment: 'CARD',
   };
 
   beforeEach(async () => {
