@@ -24,13 +24,18 @@ describe('WebhookController', () => {
       transaction: {
         id: 'ext-tx-1',
         status: 'APPROVED',
+        amount_in_cents: 12000,
       },
     },
     event: 'transaction.updated',
     sent_at: '2025-08-19T10:00:00.000Z',
     signature: {
       checksum: 'abcdef1234567890',
-      properties: ['data.transaction.id', 'data.transaction.status'],
+      properties: [
+        'transaction.id',
+        'transaction.status',
+        'transaction.amount_in_cents',
+      ],
     },
     timestamp: 1660123456,
     environment: 'test',
@@ -73,10 +78,10 @@ describe('WebhookController', () => {
       const result = await controller.create(mockWebhookPayload);
 
       // Assert
-      expect(updateTransactionWebhookUseCase.execute).toHaveBeenCalledWith({
-        idEsternalTransaction: 'ext-tx-1',
-        status: 'APPROVED',
-      });
+      expect(updateTransactionWebhookUseCase.execute).toHaveBeenCalledWith(
+        mockWebhookPayload,
+        undefined,
+      );
       expect(result).toEqual(mockTransaction);
     });
 
