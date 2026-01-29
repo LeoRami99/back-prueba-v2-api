@@ -3,7 +3,9 @@ import { CreateTransactionUseCase } from '../../application/use-cases/create-tra
 import { GetTransactionByIdUseCase } from '../../application/use-cases/get-transaction-id.use-case';
 import { GetTransactionByInternalIdUseCase } from '../../application/use-cases/get-transaction-internal-id.use-case';
 import { CreateTransactionDto } from '../dto/create-transaction.dto';
+import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('transactions')
 @Controller('transactions')
 export class TransactionController {
   constructor(
@@ -13,6 +15,11 @@ export class TransactionController {
   ) {}
 
   @Post()
+  @ApiOperation({ summary: 'Create a transaction and start payment flow' })
+  @ApiBody({ type: CreateTransactionDto })
+  @ApiResponse({ status: 201, description: 'Transaction created' })
+  @ApiResponse({ status: 400, description: 'Invalid payload' })
+  @ApiResponse({ status: 500, description: 'Server error' })
   async create(@Body() body: CreateTransactionDto) {
     const transactionData = {
       amount: body.amount,
@@ -33,10 +40,16 @@ export class TransactionController {
     );
   }
   @Get('internal/:idInternal')
+  @ApiOperation({ summary: 'Get transaction by internal reference' })
+  @ApiResponse({ status: 200, description: 'Transaction found' })
+  @ApiResponse({ status: 404, description: 'Transaction not found' })
   async getTransactionByInternalId(@Param('idInternal') idInternal: string) {
     return this.getTransactionByInternalIdUseCase.execute(idInternal);
   }
   @Get(':id')
+  @ApiOperation({ summary: 'Get transaction by id' })
+  @ApiResponse({ status: 200, description: 'Transaction found' })
+  @ApiResponse({ status: 404, description: 'Transaction not found' })
   async getTransactionById(@Param('id') id: string) {
     return this.getTransactionByIdUseCase.execute(id);
   }
