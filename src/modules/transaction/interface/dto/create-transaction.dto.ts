@@ -4,7 +4,11 @@ import {
   IsOptional,
   IsString,
   IsPositive,
+  IsInt,
+  Min,
+  Max,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateTransactionDto {
   @IsNotEmpty()
@@ -39,16 +43,17 @@ export class CreateTransactionDto {
 
   @IsNotEmpty()
   @IsString()
-  @IsString()
   token_card?: string;
 
   @IsNotEmpty()
   @IsString()
-  @IsString()
   acceptance_token?: string;
 
   @IsNotEmpty()
-  @IsString()
-  @IsString()
+  @Type(() => Number)
+  @IsInt()
+  @IsNumber()
+  @Min(1)
+  @Max(36)
   installments?: number;
 }
