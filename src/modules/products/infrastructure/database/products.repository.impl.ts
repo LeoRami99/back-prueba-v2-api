@@ -8,7 +8,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Op } from 'sequelize';
+import { Op, ValidationError } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 
 @Injectable()
@@ -49,6 +49,13 @@ export class ProductsRepositoryImpl implements ProductsRepository {
   ): Promise<ProductsEntity> {
     const tx = await this.sequelize.transaction();
     try {
+      if (!Number.isFinite(stock)) {
+        throw new BadRequestException({
+          statusCode: 400,
+          message: 'Stock must be a valid number',
+        });
+      }
+
       const product = await this.productModel.findByPk(id, {
         transaction: tx,
         lock: tx.LOCK.UPDATE,
@@ -59,6 +66,14 @@ export class ProductsRepositoryImpl implements ProductsRepository {
           message: 'Product not found',
         });
       }
+      const parseProductJson = product.toJSON() as ProductsEntity;
+
+      if (!Number.isFinite(parseProductJson.stock)) {
+        throw new BadRequestException({
+          statusCode: 400,
+          message: 'Product stock is not initialized',
+        });
+      }
 
       if (stock < 0) {
         throw new BadRequestException({
@@ -66,7 +81,7 @@ export class ProductsRepositoryImpl implements ProductsRepository {
           message: 'Stock cannot be negative',
         });
       }
-      const stockUpdate = product.stock - stock;
+      const stockUpdate = (parseProductJson?.stock ?? 0) - stock;
 
       if (stockUpdate < 0) {
         throw new BadRequestException({
@@ -89,6 +104,12 @@ export class ProductsRepositoryImpl implements ProductsRepository {
         error instanceof BadRequestException
       ) {
         throw error;
+      }
+      if (error instanceof ValidationError) {
+        throw new BadRequestException({
+          statusCode: 400,
+          message: 'Invalid product stock update',
+        });
       }
       throw new InternalServerErrorException({
         statusCode: 500,
