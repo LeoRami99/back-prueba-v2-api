@@ -31,7 +31,7 @@ export class CreateTransactionDto {
 
   @ApiProperty({ example: '7a1b2c3d-4e5f-6789-0123-456789abcdef' })
   @IsNotEmpty()
-  @IsUUID()
+  @IsString()
   productId: string;
 
   @ApiProperty({ example: 10000, description: 'Price per unit' })
