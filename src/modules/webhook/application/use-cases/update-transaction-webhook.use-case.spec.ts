@@ -3,9 +3,9 @@ import { UpdateTransactionWebhookUseCase } from './update-transaction-webhook.us
 import { UpdateTransactionByIdExternalUseCase } from '../../../transaction/application/use-cases/update-transaction-byexternal.use-case';
 import {
   TransactionEntity,
-  TransactionExternalParams,
 } from 'src/modules/transaction/domain/entities/transaction.entity';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { createHash } from 'crypto';
 
 describe('UpdateTransactionWebhookUseCase', () => {
   let useCase: UpdateTransactionWebhookUseCase;
@@ -23,11 +23,36 @@ describe('UpdateTransactionWebhookUseCase', () => {
     methodPayment: 'CARD',
   };
 
-  const mockTransactionExternalParams: Partial<TransactionExternalParams> = {
+  const mockWebhookPayload = {
+    event: 'transaction.updated',
     data: {
-      id: 'ext-tx-1',
-      status: 'APPROVED',
+      transaction: {
+        id: 'ext-tx-1',
+        status: 'APPROVED',
+        amount_in_cents: 12000,
+      },
     },
+    sent_at: '2026-01-29T04:13:40.425Z',
+    timestamp: 1769660020,
+    signature: {
+      checksum: '',
+      properties: [
+        'transaction.id',
+        'transaction.status',
+        'transaction.amount_in_cents',
+      ],
+    },
+    environment: 'stagtest',
+  };
+
+  const buildChecksum = (secret: string) => {
+    const values = [
+      mockWebhookPayload.data.transaction.id,
+      mockWebhookPayload.data.transaction.status,
+      mockWebhookPayload.data.transaction.amount_in_cents,
+    ];
+    const chain = `${values.join('')}${mockWebhookPayload.timestamp}${secret}`;
+    return createHash('sha256').update(chain).digest('hex');
   };
 
   beforeEach(async () => {
@@ -52,6 +77,11 @@ describe('UpdateTransactionWebhookUseCase', () => {
       module.get<UpdateTransactionByIdExternalUseCase>(
         UpdateTransactionByIdExternalUseCase,
       );
+
+    process.env.EVENTS_SECRET = 'events-secret';
+    mockWebhookPayload.signature.checksum = buildChecksum(
+      process.env.EVENTS_SECRET,
+    );
   });
 
   it('should be defined', () => {
@@ -66,11 +96,14 @@ describe('UpdateTransactionWebhookUseCase', () => {
         .mockResolvedValue(mockTransaction);
 
       // Act
-      const result = await useCase.execute(mockTransactionExternalParams);
+      const result = await useCase.execute(mockWebhookPayload);
 
       // Assert
       expect(updateTransactionByIdExternalUseCase.execute).toHaveBeenCalledWith(
-        mockTransactionExternalParams,
+        {
+          idEsternalTransaction: 'ext-tx-1',
+          status: 'APPROVED',
+        },
       );
       expect(result).toEqual(mockTransaction);
     });
@@ -78,6 +111,19 @@ describe('UpdateTransactionWebhookUseCase', () => {
     it('should throw BadRequestException when transaction data is not provided', async () => {
       // Act & Assert
       await expect(useCase.execute(null)).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw UnauthorizedException when signature is invalid', async () => {
+      const badPayload = {
+        ...mockWebhookPayload,
+        signature: {
+          ...mockWebhookPayload.signature,
+          checksum: 'invalid',
+        },
+      };
+      await expect(useCase.execute(badPayload)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('should pass through errors from the underlying use case', async () => {
@@ -89,7 +135,7 @@ describe('UpdateTransactionWebhookUseCase', () => {
 
       // Act & Assert
       await expect(
-        useCase.execute(mockTransactionExternalParams),
+        useCase.execute(mockWebhookPayload),
       ).rejects.toThrow(expectedError);
     });
   });
