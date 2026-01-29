@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TransactionController } from './transaction.controller';
 import { CreateTransactionUseCase } from '../../application/use-cases/create-transaction.use-case';
 import { GetTransactionByIdUseCase } from '../../application/use-cases/get-transaction-id.use-case';
+import { GetTransactionByInternalIdUseCase } from '../../application/use-cases/get-transaction-internal-id.use-case';
 import { CreateTransactionDto } from '../dto/create-transaction.dto';
 import { TransactionEntity } from '../../domain/entities/transaction.entity';
 
@@ -9,6 +10,7 @@ describe('TransactionController', () => {
   let controller: TransactionController;
   let createTransactionUseCase: CreateTransactionUseCase;
   let getTransactionByIdUseCase: GetTransactionByIdUseCase;
+  let getTransactionByInternalIdUseCase: GetTransactionByInternalIdUseCase;
 
   const mockTransaction: TransactionEntity = {
     id: '1',
@@ -30,6 +32,9 @@ describe('TransactionController', () => {
     const getTransactionByIdUseCaseMock = {
       execute: jest.fn(),
     };
+    const getTransactionByInternalIdUseCaseMock = {
+      execute: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [TransactionController],
@@ -42,6 +47,10 @@ describe('TransactionController', () => {
           provide: GetTransactionByIdUseCase,
           useValue: getTransactionByIdUseCaseMock,
         },
+        {
+          provide: GetTransactionByInternalIdUseCase,
+          useValue: getTransactionByInternalIdUseCaseMock,
+        },
       ],
     }).compile();
 
@@ -52,6 +61,10 @@ describe('TransactionController', () => {
     getTransactionByIdUseCase = module.get<GetTransactionByIdUseCase>(
       GetTransactionByIdUseCase,
     );
+    getTransactionByInternalIdUseCase =
+      module.get<GetTransactionByInternalIdUseCase>(
+        GetTransactionByInternalIdUseCase,
+      );
   });
 
   it('should be defined', () => {
@@ -122,14 +135,14 @@ describe('TransactionController', () => {
       const internalId = 'ref-internal-1';
 
       jest
-        .spyOn(getTransactionByIdUseCase, 'execute')
+        .spyOn(getTransactionByInternalIdUseCase, 'execute')
         .mockResolvedValue(mockTransaction);
 
       // Act
       const result = await controller.getTransactionByInternalId(internalId);
 
       // Assert
-      expect(getTransactionByIdUseCase.execute).toHaveBeenCalledWith(
+      expect(getTransactionByInternalIdUseCase.execute).toHaveBeenCalledWith(
         internalId,
       );
       expect(result).toEqual(mockTransaction);
