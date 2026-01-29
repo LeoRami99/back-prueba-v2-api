@@ -43,10 +43,24 @@ export class TransactionRepositoryImpl implements TransactionRepository {
       return transaction as unknown as TransactionEntity;
     } catch (error: unknown) {
       await t.rollback();
-      throw new InternalServerErrorException(
-        `Error creating transaction in database`,
-        error instanceof Error ? error.message : 'Unknown error',
-      );
+      if (error instanceof UniqueConstraintError) {
+        throw new ConflictException({
+          code: 'UNIQUE_CONSTRAINT',
+          message: error.message,
+        });
+      }
+      if (error instanceof ValidationError) {
+        throw new UnprocessableEntityException({
+          code: 'VALIDATION_ERROR',
+          message: error.message,
+          details: error.errors?.map((e) => ({ path: e.path, msg: e.message })),
+        });
+      }
+      throw new InternalServerErrorException({
+        code: 'TX_CREATE_ERROR',
+        message: `Error creating transaction in database`,
+        cause: (error as Error)?.message ?? 'Unknown error',
+      });
     }
   }
   async getTransactionById(id: string): Promise<TransactionEntity | null> {
