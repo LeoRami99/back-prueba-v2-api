@@ -41,7 +41,6 @@ export class WebhookController {
     @Body() body: any,
     @Headers('x-event-checksum') checksumHeader?: string,
   ) {
-    console.log('Received webhook:', body);
     return this.updateTransactionWebhook.execute(body, checksumHeader);
   }
 }
