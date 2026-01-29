@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -14,6 +15,7 @@ async function bootstrap() {
       transform: true,
     }),
   );
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   // Swagger configuration
   const config = new DocumentBuilder()
@@ -26,6 +28,8 @@ async function bootstrap() {
     .addTag('transactions', 'Transaction processing endpoints')
     .addTag('cards', 'Card tokenization endpoints')
     .addTag('webhooks', 'Webhook notification endpoints')
+    .addTag('customers', 'Customer management endpoints')
+    .addTag('deliveries', 'Delivery management endpoints')
     .addBearerAuth()
     .build();
 
