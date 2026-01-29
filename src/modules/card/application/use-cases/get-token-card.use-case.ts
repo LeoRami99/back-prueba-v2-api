@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CardEntity } from '../../domain/entities/card.entity';
 import { CardTokenEntity } from '../../domain/entities/card.token.entity';
 import { CardRepository } from '../../domain/repositories/card.repository';
@@ -11,7 +11,7 @@ export class GetCardTokenUseCase {
     const cardToken: CardTokenEntity =
       await this.cardRepository.getCardToken(data);
     if (!cardToken) {
-      throw new Error('Error creating card token');
+      throw new InternalServerErrorException('Error creating card token');
     }
     return cardToken;
   }
