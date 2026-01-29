@@ -8,8 +8,10 @@ import {
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class GetProductsDto {
+  @ApiPropertyOptional({ example: 1, minimum: 1 })
   @IsInt()
   @IsPositive()
   @Type(() => Number)
@@ -18,6 +20,7 @@ export class GetProductsDto {
   @Type(() => Number)
   page: number;
 
+  @ApiPropertyOptional({ example: 10, minimum: 1, maximum: 100 })
   @IsInt()
   @IsPositive()
   @Type(() => Number)
@@ -26,6 +29,7 @@ export class GetProductsDto {
   @Max(100)
   pageSize: number;
 
+  @ApiPropertyOptional({ example: 'phone' })
   @IsOptional()
   @IsString()
   filter?: string;
