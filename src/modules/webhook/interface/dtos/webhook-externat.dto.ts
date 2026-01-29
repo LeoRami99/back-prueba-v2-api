@@ -12,6 +12,7 @@ import {
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+
 export class PaymentMethodExtraThreeDsAuthDto {
   @ApiProperty()
   @IsString()
@@ -216,6 +217,15 @@ export class SignatureDto {
   properties: string[];
 }
 
+export class WebhookTransactionWrapperDto {
+  @ApiProperty({ type: () => TransactionDataDto })
+  @IsObject()
+  @ValidateNested()
+  @Type(() => TransactionDataDto)
+  @IsNotEmpty()
+  transaction: TransactionDataDto;
+}
+
 export class WebhookDataDto {
   @ApiProperty({ type: () => WebhookTransactionWrapperDto })
   @IsObject()
@@ -248,13 +258,4 @@ export class WebhookDataDto {
   @IsString()
   @IsNotEmpty()
   environment: string;
-}
-
-export class WebhookTransactionWrapperDto {
-  @ApiProperty({ type: () => TransactionDataDto })
-  @IsObject()
-  @ValidateNested()
-  @Type(() => TransactionDataDto)
-  @IsNotEmpty()
-  transaction: TransactionDataDto;
 }

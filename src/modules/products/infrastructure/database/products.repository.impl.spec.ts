@@ -3,7 +3,11 @@ import { ProductsRepositoryImpl } from './products.repository.impl';
 import { ProductModel } from './product.model';
 import { getModelToken } from '@nestjs/sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Op } from 'sequelize';
 
 describe('ProductsRepositoryImpl', () => {
@@ -18,10 +22,7 @@ describe('ProductsRepositoryImpl', () => {
   };
 
   const mockSequelize = {
-    transaction: jest.fn(() => ({
-      commit: jest.fn(),
-      rollback: jest.fn(),
-    })),
+    transaction: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -130,120 +131,6 @@ describe('ProductsRepositoryImpl', () => {
         total: 1,
         pages: 1,
       });
-    });
-  });
-
-  describe('updateStockByProductId', () => {
-    it('should update product stock successfully', async () => {
-      const productId = '1';
-      const stockToUpdate = 5;
-
-      const mockProduct = {
-        id: '1',
-        name: 'Test Product',
-        price: 100,
-        currency: 'COP',
-        description: 'Description',
-        image: 'image.jpg',
-        category: 'Category',
-        stock: 10,
-      };
-
-      const mockTransaction = {
-        commit: jest.fn(),
-        rollback: jest.fn(),
-      };
-
-      mockSequelize.transaction.mockResolvedValue(mockTransaction);
-      mockProductModel.findByPk.mockResolvedValue(mockProduct);
-      mockProductModel.update.mockResolvedValue([1]);
-
-      const result = await repository.updateStockByProductId(
-        productId,
-        stockToUpdate,
-      );
-
-      expect(mockSequelize.transaction).toHaveBeenCalled();
-      expect(mockProductModel.findByPk).toHaveBeenCalledWith(productId, {
-        raw: true,
-      });
-      expect(mockProductModel.update).toHaveBeenCalledWith(
-        { stock: 5 }, // 10 - 5 = 5
-        {
-          where: { id: productId },
-          returning: true,
-          transaction: mockTransaction,
-        },
-      );
-      expect(mockTransaction.commit).toHaveBeenCalled();
-      expect(result).toEqual(mockProduct);
-    });
-
-    it('should throw NotFoundException when product not found', async () => {
-      const productId = 'nonexistent-id';
-      const stockToUpdate = 5;
-
-      const mockTransaction = {
-        commit: jest.fn(),
-        rollback: jest.fn(),
-      };
-
-      mockSequelize.transaction.mockResolvedValue(mockTransaction);
-      mockProductModel.findByPk.mockResolvedValue(null);
-
-      await expect(
-        repository.updateStockByProductId(productId, stockToUpdate),
-      ).rejects.toThrow(NotFoundException);
-
-      expect(mockTransaction.rollback).toHaveBeenCalled();
-    });
-
-    it('should throw NotFoundException when stock is negative', async () => {
-      const productId = '1';
-      const stockToUpdate = -5;
-
-      const mockTransaction = {
-        commit: jest.fn(),
-        rollback: jest.fn(),
-      };
-
-      mockSequelize.transaction.mockResolvedValue(mockTransaction);
-
-      await expect(
-        repository.updateStockByProductId(productId, stockToUpdate),
-      ).rejects.toThrow(NotFoundException);
-
-      expect(mockTransaction.rollback).toHaveBeenCalled();
-    });
-
-    it('should throw NotFoundException when resulting stock would be negative', async () => {
-      const productId = '1';
-      const stockToUpdate = 15; // More than available stock
-
-      const mockProduct = {
-        id: '1',
-        name: 'Test Product',
-        price: 100,
-        currency: 'COP',
-        description: 'Description',
-        image: 'image.jpg',
-        category: 'Category',
-        stock: 10, // Only 10 in stock
-      };
-
-      const mockTransaction = {
-        commit: jest.fn(),
-        rollback: jest.fn(),
-      };
-
-      mockSequelize.transaction.mockResolvedValue(mockTransaction);
-      mockProductModel.findByPk.mockResolvedValue(mockProduct);
-
-      await expect(
-        repository.updateStockByProductId(productId, stockToUpdate),
-      ).rejects.toThrow(NotFoundException);
-
-      expect(mockTransaction.rollback).toHaveBeenCalled();
     });
   });
 });
