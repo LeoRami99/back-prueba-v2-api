@@ -26,7 +26,7 @@ export class UpdateTransactionByIdExternalUseCase {
         message: 'Transaction data is required',
       });
     }
-    console.log('Updating transaction with data:', transactionData);
+
     if (!transactionData.idEsternalTransaction || !transactionData.status) {
       throw new BadRequestException({
         statusCode: 400,
